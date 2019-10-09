@@ -2866,3 +2866,46 @@ KMOD_EXPORT void kmod_module_dependency_symbols_free_list(struct kmod_list *list
 		list = kmod_list_remove(list);
 	}
 }
+
+/**
+ * kmod_module_get_builtin:
+ * @ctx: kmod library context
+ * @list: where to save the builtin module list
+ *
+ * Returns: 0 on success or < 0 otherwise.
+ */
+int kmod_module_get_builtin(struct kmod_ctx *ctx, struct kmod_list **list)
+{
+	struct kmod_builtin_iter *iter;
+	int err = 0;
+
+	iter = kmod_builtin_iter_new(ctx);
+	if (!iter)
+		return -errno;
+
+	while (kmod_builtin_iter_next(iter)) {
+		struct kmod_module *mod = NULL;
+		const char *strings;
+		int count;
+
+		count = kmod_builtin_iter_get_strings(iter, &strings);
+
+		if (count < 1) {
+			err = -errno;
+			goto fail;
+		}
+
+		kmod_module_new_from_name(ctx, strings, &mod);
+		kmod_module_set_builtin(mod, true);
+
+		*list = kmod_list_append(*list, mod);
+	}
+
+	kmod_builtin_iter_free(iter);
+	return err;
+fail:
+	kmod_builtin_iter_free(iter);
+	kmod_module_unref_list(*list);
+	*list = NULL;
+	return err;
+}
