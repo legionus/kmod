@@ -162,7 +162,7 @@ int kmod_builtin_get_modinfo(struct kmod_ctx *ctx, const char *modname,
 	iter = kmod_builtin_iter_new(ctx);
 
 	if (!iter)
-		return -1;
+		return -errno;
 
 	modlen = strlen(modname);
 
